@@ -29,4 +29,11 @@ public class TaskController {
         Task saved = repository.save(task);
         return ResponseEntity.created(URI.create("/tasks/" + saved.getId())).body(saved);
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Task> getById(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }
