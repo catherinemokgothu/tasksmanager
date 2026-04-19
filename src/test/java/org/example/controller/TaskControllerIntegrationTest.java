@@ -58,4 +58,33 @@ public class TaskControllerIntegrationTest {
         ResponseEntity<TaskResponse> notFound = restTemplate.getForEntity(base + "/" + id, TaskResponse.class);
         Assertions.assertEquals(HttpStatus.NOT_FOUND, notFound.getStatusCode());
     }
+
+    @Test
+    public void update_invalidValidation_returnsBadRequest() {
+        String base = "http://localhost:" + port + "/tasks";
+
+        // create a valid task first
+        TaskRequest req = new TaskRequest("To update","ok");
+        ResponseEntity<TaskResponse> created = restTemplate.postForEntity(base, req, TaskResponse.class);
+        Assertions.assertEquals(HttpStatus.CREATED, created.getStatusCode());
+        Long id = created.getBody().getId();
+
+        // attempt invalid update (blank title)
+        TaskRequest invalid = new TaskRequest("", "newdesc");
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<TaskRequest> entity = new HttpEntity<>(invalid, headers);
+
+        ResponseEntity<String> resp = restTemplate.exchange(base + "/" + id, HttpMethod.PUT, entity, String.class);
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+        Assertions.assertTrue(resp.getBody().contains("errors"));
+        Assertions.assertTrue(resp.getBody().contains("title"));
+    }
+
+    @Test
+    public void delete_nonNumericId_returnsBadRequest() {
+        String base = "http://localhost:" + port + "/tasks";
+        ResponseEntity<String> resp = restTemplate.exchange(base + "/abc", HttpMethod.DELETE, null, String.class);
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, resp.getStatusCode());
+    }
 }

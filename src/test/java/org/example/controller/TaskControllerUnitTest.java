@@ -81,4 +81,26 @@ public class TaskControllerUnitTest {
                 .andExpect(jsonPath("$.id").value(5))
                 .andExpect(jsonPath("$.title").value("Test"));
     }
+
+    @Test
+    public void update_blankTitle_returnsBadRequest() throws Exception {
+        // repository finds existing entity
+        Task existing = new Task("Old","desc");
+        existing.setId(10L);
+        when(repository.findById(10L)).thenReturn(Optional.of(existing));
+
+        TaskRequest req = new TaskRequest("", "newdesc");
+
+        mockMvc.perform(put("/tasks/10")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(req)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors.title").exists());
+    }
+
+    @Test
+    public void delete_nonNumericId_returnsBadRequest() throws Exception {
+        mockMvc.perform(delete("/tasks/abc"))
+                .andExpect(status().isBadRequest());
+    }
 }
